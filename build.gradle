@@ -20,3 +20,12 @@ allprojects {
         google()
     }
 }
+
+task startBackend (dependsOn: ':backend:appengineStart')
+task startTestConnected (dependsOn: ':app:connectedPaidVersionDebugAndroidTest')
+task stopBackend(dependsOn: ':backend:appengineStop')
+
+task testWithBackend (dependsOn: [startBackend, startTestConnected, stopBackend]) {
+    startTestConnected.mustRunAfter(startBackend)
+    stopBackend.mustRunAfter(startTestConnected)
+}

@@ -1,44 +1,30 @@
 package com.udacity.gradle.builditbigger;
 
-import android.os.Bundle;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
-import android.widget.Toast;
 
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
+import com.google.api.client.extensions.android.http.AndroidHttp;
+import com.google.api.client.extensions.android.json.AndroidJsonFactory;
+import com.google.api.client.googleapis.services.AbstractGoogleClientRequest;
+import com.google.api.client.googleapis.services.GoogleClientRequestInitializer;
+import com.udacity.gradle.builditbigger.backend.myApi.MyApi;
+
+import java.io.IOException;
 
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button fetchJokeButton;
+    private EndpointTestCallback mCallback;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        fetchJokeButton = findViewById(R.id.fetch_joke_button);
-        fetchJokeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                fetchJoke();
-            }
-        });
-
-        AdView mAdView = findViewById(R.id.adView);
-        // Create an ad request. Check logcat output for the hashed device ID to
-        // get test ads on a physical device. e.g.
-        // "Use AdRequest.Builder.addTestDevice("ABCDEF012345") to get test ads on this device."
-        AdRequest adRequest = new AdRequest.Builder()
-                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
-                .build();
-        mAdView.loadAd(adRequest);
+    public void setLoginCallback(EndpointTestCallback callback){
+        mCallback = callback;
     }
 
+    public interface EndpointTestCallback{
+        void onHandleResponseCalled(String response);
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -62,9 +48,48 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void fetchJoke() {
-        Toast.makeText(this, "derp", Toast.LENGTH_SHORT).show();
-    }
+    public void onEndpointResponseReceived(String response) {}
+    public void onEndpointResponseError() {}
 
+    public class EndpointsAsyncTask extends AsyncTask<Void, Void, String> {
+        private MyApi myApiService = null;
+
+        @Override
+        protected String doInBackground(Void... params) {
+            if(myApiService == null) {  // Only do this once
+                MyApi.Builder builder = new MyApi.Builder(AndroidHttp.newCompatibleTransport(),
+                        new AndroidJsonFactory(), null)
+                        // options for running against local devappserver
+                        // - 10.0.2.2 is localhost's IP address in Android emulator
+                        // - turn off compression when running against local devappserver
+                        .setRootUrl("http://10.0.2.2:8080/_ah/api/")
+                        .setGoogleClientRequestInitializer(new GoogleClientRequestInitializer() {
+                            @Override
+                            public void initialize(AbstractGoogleClientRequest<?> abstractGoogleClientRequest) {
+                                abstractGoogleClientRequest.setDisableGZipContent(true);
+                            }
+                        });
+                // end options for devappserver
+
+                myApiService = builder.build();
+            }
+
+            try {
+                return myApiService.tellJoke().execute().getData();
+            } catch (IOException e) {
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            if (mCallback != null) mCallback.onHandleResponseCalled(result);
+
+            if (result != null)
+                onEndpointResponseReceived(result);
+            else
+                onEndpointResponseError();
+        }
+    }
 
 }

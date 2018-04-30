@@ -1,25 +1,36 @@
 package com.udacity.gradle.builditbigger.freeversion;
 
-import android.support.v7.app.AppCompatActivity;
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
+import com.udacity.gradle.builditbigger.MainActivity;
 import com.udacity.gradle.builditbigger.R;
+import com.udacity.gradle.builditbigger.jokedisplay.JokeDisplayActivity;
 
-public class MainFreeActivity extends AppCompatActivity {
+public class MainFreeActivity extends MainActivity {
 
     private Button fetchJokeButton;
+    public InterstitialAd mInterstitialAd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main_paid);
+        setContentView(R.layout.activity_main_free);
+
+        mInterstitialAd = new InterstitialAd(this);
+        mInterstitialAd.setAdUnitId(getString(R.string.banner_ad_unit_id));
+        mInterstitialAd.loadAd(new AdRequest.Builder().build());
 
         fetchJokeButton = findViewById(R.id.fetch_joke_button);
         fetchJokeButton.setOnClickListener(new View.OnClickListener() {
@@ -39,29 +50,43 @@ public class MainFreeActivity extends AppCompatActivity {
         mAdView.loadAd(adRequest);
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
     public void fetchJoke() {
-        Toast.makeText(this, "derp", Toast.LENGTH_SHORT).show();
+        if (mInterstitialAd.isLoaded()) {
+            mInterstitialAd.show();
+
+            mInterstitialAd.setAdListener(new AdListener() {
+                @Override
+                public void onAdLoaded() {}
+
+                @Override
+                public void onAdFailedToLoad(int errorCode) {}
+
+                @Override
+                public void onAdOpened() {}
+
+                @Override
+                public void onAdLeftApplication() {}
+
+                @Override
+                public void onAdClosed() {
+                    new EndpointsAsyncTask().execute();
+                }
+            });
+        } else {
+            Log.d("TAG", "The interstitial wasn't loaded yet.");
+        }
+    }
+
+    @Override
+    public void onEndpointResponseReceived(String response) {
+        Intent intent = new Intent(MainFreeActivity.this, JokeDisplayActivity.class);
+        intent.putExtra(JokeDisplayActivity.PARAM_JOKE, response);
+        startActivity(intent);
+    }
+
+    @Override
+    public void onEndpointResponseError() {
+        Snackbar.make(fetchJokeButton, getString(R.string.error_backend),
+                Snackbar.LENGTH_LONG).show();
     }
 }
