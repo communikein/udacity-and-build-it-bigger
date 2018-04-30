@@ -18,7 +18,7 @@ public class MainActivity extends AppCompatActivity {
 
     private EndpointTestCallback mCallback;
 
-    public void setLoginCallback(EndpointTestCallback callback){
+    public void setCallback(EndpointTestCallback callback){
         mCallback = callback;
     }
 

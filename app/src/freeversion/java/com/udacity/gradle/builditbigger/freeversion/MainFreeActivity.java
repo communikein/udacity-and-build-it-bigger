@@ -21,6 +21,8 @@ import com.udacity.gradle.builditbigger.jokedisplay.JokeDisplayActivity;
 public class MainFreeActivity extends MainActivity {
 
     private Button fetchJokeButton;
+    private View progressBar;
+
     public InterstitialAd mInterstitialAd;
 
     @Override
@@ -28,9 +30,16 @@ public class MainFreeActivity extends MainActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_free);
 
+        // Create an ad request. Check logcat output for the hashed device ID to
+        // get test ads on a physical device. e.g.
+        // "Use AdRequest.Builder.addTestDevice("ABCDEF012345") to get test ads on this device."
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                .build();
+
         mInterstitialAd = new InterstitialAd(this);
-        mInterstitialAd.setAdUnitId(getString(R.string.banner_ad_unit_id));
-        mInterstitialAd.loadAd(new AdRequest.Builder().build());
+        mInterstitialAd.setAdUnitId(getString(R.string.interstitial_ad_id));
+        mInterstitialAd.loadAd(adRequest);
 
         fetchJokeButton = findViewById(R.id.fetch_joke_button);
         fetchJokeButton.setOnClickListener(new View.OnClickListener() {
@@ -40,13 +49,10 @@ public class MainFreeActivity extends MainActivity {
             }
         });
 
+        progressBar = findViewById(R.id.progressBar);
+        progressBar.setVisibility(View.GONE);
+
         AdView mAdView = findViewById(R.id.adView);
-        // Create an ad request. Check logcat output for the hashed device ID to
-        // get test ads on a physical device. e.g.
-        // "Use AdRequest.Builder.addTestDevice("ABCDEF012345") to get test ads on this device."
-        AdRequest adRequest = new AdRequest.Builder()
-                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
-                .build();
         mAdView.loadAd(adRequest);
     }
 
@@ -69,6 +75,9 @@ public class MainFreeActivity extends MainActivity {
 
                 @Override
                 public void onAdClosed() {
+                    progressBar.setVisibility(View.VISIBLE);
+                    fetchJokeButton.setEnabled(false);
+
                     new EndpointsAsyncTask().execute();
                 }
             });
@@ -79,6 +88,9 @@ public class MainFreeActivity extends MainActivity {
 
     @Override
     public void onEndpointResponseReceived(String response) {
+        progressBar.setVisibility(View.GONE);
+        fetchJokeButton.setEnabled(true);
+
         Intent intent = new Intent(MainFreeActivity.this, JokeDisplayActivity.class);
         intent.putExtra(JokeDisplayActivity.PARAM_JOKE, response);
         startActivity(intent);
@@ -86,6 +98,9 @@ public class MainFreeActivity extends MainActivity {
 
     @Override
     public void onEndpointResponseError() {
+        progressBar.setVisibility(View.GONE);
+        fetchJokeButton.setEnabled(true);
+
         Snackbar.make(fetchJokeButton, getString(R.string.error_backend),
                 Snackbar.LENGTH_LONG).show();
     }

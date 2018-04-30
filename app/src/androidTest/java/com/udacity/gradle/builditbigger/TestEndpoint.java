@@ -24,7 +24,7 @@ public class TestEndpoint {
     @Test
     public void testFreeEndpoint() {
         MainPaidActivity activity = mActivityRule.getActivity();
-        activity.setLoginCallback(new MainPaidActivity.EndpointTestCallback() {
+        activity.setCallback(new MainPaidActivity.EndpointTestCallback() {
             @Override
             public void onHandleResponseCalled(String response) {
                 assertNotNull(response);

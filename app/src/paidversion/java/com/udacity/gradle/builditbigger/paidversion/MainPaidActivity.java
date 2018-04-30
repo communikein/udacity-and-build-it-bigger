@@ -34,6 +34,7 @@ public class MainPaidActivity extends MainActivity {
 
     public void fetchJoke() {
         progressBar.setVisibility(View.VISIBLE);
+        fetchJokeButton.setEnabled(false);
 
         new EndpointsAsyncTask().execute();
     }
@@ -41,6 +42,7 @@ public class MainPaidActivity extends MainActivity {
     @Override
     public void onEndpointResponseReceived(String response) {
         progressBar.setVisibility(View.GONE);
+        fetchJokeButton.setEnabled(true);
 
         Intent intent = new Intent(MainPaidActivity.this, JokeDisplayActivity.class);
         intent.putExtra(JokeDisplayActivity.PARAM_JOKE, response);
@@ -50,6 +52,7 @@ public class MainPaidActivity extends MainActivity {
     @Override
     public void onEndpointResponseError() {
         progressBar.setVisibility(View.GONE);
+        fetchJokeButton.setEnabled(true);
 
         Snackbar.make(fetchJokeButton, getString(R.string.error_backend),
                 Snackbar.LENGTH_LONG).show();
