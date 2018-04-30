@@ -6,11 +6,12 @@ import android.support.design.widget.Snackbar;
 import android.view.View;
 import android.widget.Button;
 
+import com.udacity.gradle.builditbigger.EndpointAsyncTask;
 import com.udacity.gradle.builditbigger.MainActivity;
 import com.udacity.gradle.builditbigger.R;
 import com.udacity.gradle.builditbigger.jokedisplay.JokeDisplayActivity;
 
-public class MainPaidActivity extends MainActivity {
+public class MainPaidActivity extends MainActivity implements EndpointAsyncTask.EndpointTestCallback {
 
     private Button fetchJokeButton;
     private View progressBar;
@@ -36,7 +37,13 @@ public class MainPaidActivity extends MainActivity {
         progressBar.setVisibility(View.VISIBLE);
         fetchJokeButton.setEnabled(false);
 
-        new EndpointsAsyncTask().execute();
+        new EndpointAsyncTask(this).execute();
+    }
+
+    @Override
+    public void onHandleResponseCalled(String response) {
+        if (mTestCallback != null)
+            mTestCallback.onHandleResponseCalled(response);
     }
 
     @Override

@@ -1,30 +1,32 @@
 package com.udacity.gradle.builditbigger;
 
-import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.google.api.client.extensions.android.http.AndroidHttp;
-import com.google.api.client.extensions.android.json.AndroidJsonFactory;
-import com.google.api.client.googleapis.services.AbstractGoogleClientRequest;
-import com.google.api.client.googleapis.services.GoogleClientRequestInitializer;
-import com.udacity.gradle.builditbigger.backend.myApi.MyApi;
 
-import java.io.IOException;
+public class MainActivity extends AppCompatActivity implements EndpointAsyncTask.EndpointTestCallback {
 
+    public EndpointResponseCallback mResponseCallback;
+    public EndpointTestCallback mTestCallback;
 
-public class MainActivity extends AppCompatActivity {
-
-    private EndpointTestCallback mCallback;
-
-    public void setCallback(EndpointTestCallback callback){
-        mCallback = callback;
+    public interface EndpointResponseCallback {
+        void onEndpointResponseReceived(String response);
+        void onEndpointResponseError();
     }
 
-    public interface EndpointTestCallback{
+    public interface EndpointTestCallback {
         void onHandleResponseCalled(String response);
     }
+
+    public void setEndpointResponseCallback(EndpointResponseCallback callback) {
+        this.mResponseCallback = callback;
+    }
+
+    public void setEndpointTestCallback(EndpointTestCallback callback) {
+        this.mTestCallback = callback;
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -48,48 +50,18 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void onEndpointResponseReceived(String response) {}
-    public void onEndpointResponseError() {}
+    @Override
+    public void onHandleResponseCalled(String response) {
 
-    public class EndpointsAsyncTask extends AsyncTask<Void, Void, String> {
-        private MyApi myApiService = null;
-
-        @Override
-        protected String doInBackground(Void... params) {
-            if(myApiService == null) {  // Only do this once
-                MyApi.Builder builder = new MyApi.Builder(AndroidHttp.newCompatibleTransport(),
-                        new AndroidJsonFactory(), null)
-                        // options for running against local devappserver
-                        // - 10.0.2.2 is localhost's IP address in Android emulator
-                        // - turn off compression when running against local devappserver
-                        .setRootUrl("http://10.0.2.2:8080/_ah/api/")
-                        .setGoogleClientRequestInitializer(new GoogleClientRequestInitializer() {
-                            @Override
-                            public void initialize(AbstractGoogleClientRequest<?> abstractGoogleClientRequest) {
-                                abstractGoogleClientRequest.setDisableGZipContent(true);
-                            }
-                        });
-                // end options for devappserver
-
-                myApiService = builder.build();
-            }
-
-            try {
-                return myApiService.tellJoke().execute().getData();
-            } catch (IOException e) {
-                return null;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            if (mCallback != null) mCallback.onHandleResponseCalled(result);
-
-            if (result != null)
-                onEndpointResponseReceived(result);
-            else
-                onEndpointResponseError();
-        }
     }
 
+    @Override
+    public void onEndpointResponseReceived(String response) {
+
+    }
+
+    @Override
+    public void onEndpointResponseError() {
+
+    }
 }

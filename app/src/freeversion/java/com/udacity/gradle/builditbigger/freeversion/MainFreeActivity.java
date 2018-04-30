@@ -14,11 +14,12 @@ import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.InterstitialAd;
+import com.udacity.gradle.builditbigger.EndpointAsyncTask;
 import com.udacity.gradle.builditbigger.MainActivity;
 import com.udacity.gradle.builditbigger.R;
 import com.udacity.gradle.builditbigger.jokedisplay.JokeDisplayActivity;
 
-public class MainFreeActivity extends MainActivity {
+public class MainFreeActivity extends MainActivity implements EndpointAsyncTask.EndpointTestCallback {
 
     private Button fetchJokeButton;
     private View progressBar;
@@ -78,12 +79,18 @@ public class MainFreeActivity extends MainActivity {
                     progressBar.setVisibility(View.VISIBLE);
                     fetchJokeButton.setEnabled(false);
 
-                    new EndpointsAsyncTask().execute();
+                    new EndpointAsyncTask(MainFreeActivity.this).execute();
                 }
             });
         } else {
             Log.d("TAG", "The interstitial wasn't loaded yet.");
         }
+    }
+
+    @Override
+    public void onHandleResponseCalled(String response) {
+        if (mTestCallback != null)
+            mTestCallback.onHandleResponseCalled(response);
     }
 
     @Override
